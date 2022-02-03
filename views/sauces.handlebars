@@ -1,0 +1,14 @@
+<div>
+    <h3>Welcome {{user}}</h3>
+    {{#each sauces}}
+        <div>
+            <img src="{{this.image}}"/>
+            <a href="/sauces/{{id}}">Click to see {{name}}</a>
+            <button id='btn-{{id}}' class="delete-btn" onclick="deleteSauce({{id}})">Delete</button>
+        </div>
+    {{/each}}
+    <div>
+        <a href="/new-sauce" class="new-sauce-btn">Add New Sauce!</a>
+    </div>
+</div>
+<script src="/sauces.js"></script>
