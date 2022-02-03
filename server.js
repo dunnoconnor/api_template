@@ -108,10 +108,9 @@ app.post('/new-sauce', async (req,res) =>{
     //Find newSauce in db by id
     const foundSauce = await Sauce.findByPk(newSauce.id)
     if(foundSauce){
-        res.render('newSauceForm',{sauceAlert})
+        res.send('succeess')
     } else {
-        sauceAlert = 'Failed to add Sauce'
-        res.render('newSauceForm',{sauceAlert})
+        res.send('failed')
     }
 })
 
