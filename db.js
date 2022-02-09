@@ -3,8 +3,7 @@ const path = require('path');
 
 const sequelize = new Sequelize({
     dialect: 'postgres',
-    protocol: 'postgres',
-    storage: path.join(__dirname, 'data.db')
+    protocol: 'postgres'
 })
 
 module.exports = {sequelize}
