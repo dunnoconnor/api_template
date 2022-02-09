@@ -14,7 +14,7 @@ const {Sauce} = require('./models/sauce');
 const seed = require('./seed');
 
 //serve static assets from public folder
-app.use(express.static('public')) //
+// app.use(express.static('public')) //
 
 //allow express to read json request bodies
 app.use(express.json())
@@ -24,6 +24,10 @@ app.use(express.urlencoded({extended:false}))
 seed();
 
 //*************** ROUTES ******************//
+//index redirects to sauces
+app.get('/', (req,res)=>{
+    res.redirect('/sauces')
+})
 
 //get all sauces
 app.get('/sauces', async (req, res) => {
