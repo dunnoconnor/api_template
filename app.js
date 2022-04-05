@@ -31,6 +31,7 @@ app.get(`/items/:id`, async (req,res) => {
     res.json({singleitems});
   })
 
+ 
 //return one item by name
 // app.get('/item-name/:name', async(req,res)=>{   
 //   const thisItem = await Item.findOne({where:{name: req.params.name}})
@@ -51,11 +52,36 @@ app.post('/items', async(req,res) =>{
   let newItem = await Item.create(req.body);
   res.json({newItem})
 })
-// creates one new user
+
+// creates one new user Signup and Signin
 app.post('/users', async(req,res) =>{
-  let newUser = await User.create(req.body);
-  res.json({newUser})
+  
+  bcrypt.hash(req.body.password,saltRounds, async function(err,hash){
+    let newUser = await User.create({'name':req.body.name, 'password':hash});
+    console.log(hash)
+    res.json({newUser})
+  })
+
 })
+
+app.post('/sessions', async(req,res) =>{
+  const thisUser = await User.findOne({
+    where: {name:req.body.name}
+  });
+  if(!thisUser){
+    res.send('User not found')
+  } else {
+    bcrypt.compare(req.body.password, thisUser.password, async function (err, result){
+      if(result){
+        res.json(thisUser)
+      } else {
+        res.send("Passwords do not match")
+      }
+    })
+  }
+})
+
+
 //update one item by id
 app.put('/items/:id', async (req,res) => {
   let updatedItem = await Item.update(req.body, {
