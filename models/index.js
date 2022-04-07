@@ -5,6 +5,8 @@ const {sequelize} = require('../db')
 class User extends Model {}
 
 class Item extends Model {}
+class School extends Model {}
+
 
 User.init({
     name: DataTypes.STRING,
@@ -22,4 +24,14 @@ Item.init({
     timestamps: false,
 });
 
-module.exports = {User, Item,};
+School.init({
+    name: DataTypes.STRING,
+    city: DataTypes.STRING,
+    state: DataTypes.STRING,
+    women: DataTypes.FLOAT,
+}, {
+    sequelize,
+    timestamps: false,
+});
+
+module.exports = {User, Item, School};
