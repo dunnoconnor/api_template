@@ -6,7 +6,13 @@ const bcrypt = require('bcrypt');
 // set salt
 const saltRounds = 2;
 
-const {User, Item} = require('./models');
+//get api key from env
+const apiKey = process.env.API_KEY;
+//import axios
+const axios = require('axios');
+
+
+const {User, Item,} = require('./models');
 const { use } = require("bcrypt/promises");
 
 // initialise Express
@@ -14,6 +20,32 @@ const app = express();
 
 // specify out request bodies are json
 app.use(express.json());
+
+//configure basicAuth
+app.use(basicAuth({
+  authorizer : dbAuthorizer,
+  authorizeAsync : true,
+  unauthorizedResponse : () => "You do not have access to this content."
+}))
+
+//function to compare username and password
+//return boolean indicating a passwor match
+async function dbAuthorizer(username,password, callback){
+  try{
+    //get matching user from db
+    const user = await User.findOne({where: {name:username}})
+    //if user is valid, compare passwords
+    let isValid = (user !=null) ? await bcrypt.compare(password, user.password): false;
+    console.log(isValid)
+    callback(null, isValid)
+  } catch(err) {
+    //if authorize fails, log error
+    console.log("Error:", err)
+    callback(null, false)
+  }
+}
+
+
 
 // routes go here
 app.get('/', (req, res) => {
@@ -64,22 +96,37 @@ app.post('/users', async(req,res) =>{
 
 })
 
-app.post('/sessions', async(req,res) =>{
-  const thisUser = await User.findOne({
-    where: {name:req.body.name}
-  });
-  if(!thisUser){
-    res.send('User not found')
-  } else {
-    bcrypt.compare(req.body.password, thisUser.password, async function (err, result){
-      if(result){
-        res.json(thisUser)
-      } else {
-        res.send("Passwords do not match")
-      }
-    })
-  }
+app.get(`/schools`, async(req, res) => {
+  const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
+  axios.get(url)
+  .then(function (response) {
+    //if successful 
+    console.log(response.data.results[0].latest);
+    res.json(response.data.results[0])
+  })
+  .catch(function (error) {
+    //if error
+    console.log(error);
+  })
 })
+
+
+// app.post('/sessions', async(req,res) =>{
+//   const thisUser = await User.findOne({
+//     where: {name:req.body.name}
+//   });
+//   if(!thisUser){
+//     res.send('User not found')
+//   } else {
+//     bcrypt.compare(req.body.password, thisUser.password, async function (err, result){
+//       if(result){
+//         res.json(thisUser)
+//       } else {
+//         res.send("Passwords do not match")
+//       }
+//     })
+//   }
+// })
 
 
 //update one item by id

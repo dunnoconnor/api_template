@@ -11,8 +11,8 @@ const createUsers = async () => {
     let pw2 = await bcrypt.hash('password', 2)
 
     const users = [
-        {name : 'Dan', password: pw2 },
-        {name : 'Linda', password : pw1}
+        {name : 'Dan', password: pw1 },
+        {name : 'Linda', password : pw2}
     ];
 
     return users

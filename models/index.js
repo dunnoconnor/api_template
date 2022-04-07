@@ -22,4 +22,4 @@ Item.init({
     timestamps: false,
 });
 
-module.exports = {User, Item};
+module.exports = {User, Item,};
