@@ -46,7 +46,6 @@ async function dbAuthorizer(username,password, callback){
 }
 
 
-
 // routes go here
 app.get('/', (req, res) => {
   res.send('<h1>App Running</h1>')
@@ -97,12 +96,12 @@ app.post('/users', async(req,res) =>{
 })
 
 app.get(`/schools`, async(req, res) => {
-  const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
+  const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,school.name,school.state,school.city,school.school_url,latest.student.size,student.grad_students,student.demographics.women,latest.student.demographics.men,cost.attendance.academic_year,latest.cost.tuition.in_state,cost.tuition.out_of_state,latest.academics.program_reporter.programs_offered,latest.admissions.test_requirements&page=0&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
   axios.get(url)
   .then(function (response) {
     //if successful 
-    console.log(response.data.results[0].latest);
-    res.json(response.data.results[0])
+    console.log(response.data.results.latest);
+    res.json(response.data.results)
   })
   .catch(function (error) {
     //if error
