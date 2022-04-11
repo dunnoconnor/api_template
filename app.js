@@ -174,7 +174,7 @@ app.delete(`/items/:id`, async (req,res) => {
 //   });
 //   console.log(deletefave)
   // res.send( `Oh no...item number ${Favorites.schoolname} has been deleted!!!`)
-})
+// })
 })
 
 // app.post('/sessions', async(req,res) => {
