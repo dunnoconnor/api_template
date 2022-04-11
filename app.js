@@ -2,6 +2,8 @@ const express = require("express");
 //require basicAuth
 const basicAuth = require('express-basic-auth');
 //require bcrypt
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
 const bcrypt = require('bcrypt');
 // set salt
 const saltRounds = 2;
@@ -13,9 +15,10 @@ const jwks = require('jwks-rsa');
 // //import axios
 const axios = require('axios');
 
-const {User, Item, School, Favorites} = require('./models');
+const {User, Item, School, Favorites, Favorite} = require('./models');
 const { use } = require("bcrypt/promises");
 const { application } = require("express");
+const { sequelize } = require("./db");
 
 // initialise Express
 const app = express();
@@ -71,19 +74,27 @@ app.get(`/items`, async (req,res) => {
   const items = await Item.findAll();
   res.json({items});
 })
-app.get(`/favorites`, async (req,res) => {
-  const favorites = await Item.findAll();
+
+app.get(`/users/:userid/favorites`, async (req,res) => {
+  const favorites = await User.findAll({ 
+    where: {id: req.params.userid}, 
+      attributes: { exclude: ['password']}, 
+        include: { model: School }
+      });
+   
   res.json({favorites});
-})
+ }); 
 
 app.get(`/items/:id`, async (req,res) => {
   const singleitems = await Item.findByPk(req.params.id);
   res.json({singleitems});
 })
+
 app.get(`/users`, jwtCheck, async (req,res) => {
   const users = await User.findAll();
   res.json({users});
 })
+
 app.get(`/users/:id`, jwtCheck, async (req,res) => {
   const users = await User.findOne(
     {where: {id: req.params.id}});
@@ -101,9 +112,11 @@ app.get(`/school/:id`, async (req,res) => {
 })
 
 app.get(`/schoolname/:name`, async (req,res) => {
-  const schoolsname = await School.findOne(
-    {where : {name: req.params.name}});
-  res.json({schoolsname});  
+  const searchTerm = req.params.name;
+    const schoolsname = await School.findAll(
+    {where : {name: {[Op.like] : `%${searchTerm}%`}}});
+   res.json({schoolsname});  
+
 })  
 app.get(`/schoolstate/:state`, async (req,res) => {
   const schoolsbyst = await School.findAll(
@@ -131,14 +144,22 @@ app.put(`/items/:id`, async (req,res) => {
 app.post(`/items`, async (req,res) => {
    const newitem = await Item.create(req.body)
    res.send( `${newitem.name} has been created!`);
- //res.json({newitem})
+ })
+
+app.post(`/users/:userid/favorites`, async (req,res) => {
+  const favorites = await Favorite.create({
+    'UserId': req.params.userid,
+    'SchoolId': req.body.schoolid
+  })
+    res.send(`${favorites.SchoolId} has been added to your favorites`)
 })
 
-// app.post(`/favorites`, async (req,res) => {
-//   const favorite = await Favorites.create(req.body)
-//   console.log(favorite)
-//   //res.json({newitem})
-// })
+app.post(`/users`, async (req,res) => {
+bcrypt.hash(req.body.password,saltRounds, async function(err,hash){
+  let newUser = await User.create({'name':req.body.name, 'password':hash});
+  console.log(hash)
+  res.json({newUser})
+})
 
 app.delete(`/items/:id`, async (req,res) => {
   const deleteItem = await Item.destroy({
@@ -146,27 +167,15 @@ app.delete(`/items/:id`, async (req,res) => {
   });
   res.send( `Oh no...item number ${req.params.id} has been deleted!!!`)
 })
-app.post(`/users`, async (req,res) => {
-bcrypt.hash(req.body.password,saltRounds, async function(err,hash){
-  let newUser = await User.create({'name':req.body.name, 'password':hash});
-  console.log(hash)
-  res.json({newUser})
-})
-})
-// app.get(`/schools`, async(req, res) => {
-//   const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,school.name,school.state,school.city,school.school_url,latest.student.size,student.grad_students,student.demographics.women,latest.student.demographics.men,cost.attendance.academic_year,latest.cost.tuition.in_state,cost.tuition.out_of_state,latest.academics.program_reporter.programs_offered,latest.admissions.test_requirements&page=0&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
-//   axios.get(url)
-//   .then(function (response) {
-//     //if successful 
-//     console.log(response.data.results.latest);
-//     res.json(response.data.results)
-//   })
-//   .catch(function (error) {
-//     //if error
-//     console.log(error);
-//   })
-// });
 
+// app.delete(`/favorites/:userid`, async (req,res) => {
+//   const deletefave = await Favorites.this.destroy({
+//     where: {userid: req.params.userid} & {schoolid: req.params.schoolid}
+//   });
+//   console.log(deletefave)
+  // res.send( `Oh no...item number ${Favorites.schoolname} has been deleted!!!`)
+})
+})
 
 // app.post('/sessions', async(req,res) => {
 //   const thisUser = await User.findOne({
