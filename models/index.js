@@ -24,12 +24,32 @@ Item.init({
 });
 
 School.init({
-    sid: DataTypes.STRING,
     fafsa: DataTypes.STRING,
     name: DataTypes.STRING,
     city: DataTypes.STRING,
     state: DataTypes.STRING,
+    zip: DataTypes.STRING,
+    latitude: DataTypes.STRING,
+    longitude: DataTypes.STRING,
+    ownership: DataTypes.STRING,
+    website: DataTypes.STRING,
+    school_size: DataTypes.STRING,
+    total_students: DataTypes.INTEGER,
     women: DataTypes.FLOAT,
+    men: DataTypes.FLOAT,
+    school_category: DataTypes.STRING,
+    instate_tuition: DataTypes.STRING,
+    outofstate_tuition: DataTypes.STRING,
+    num_programs_offered:DataTypes.STRING,
+    cost_books: DataTypes.STRING,
+    cost_roomboard_oncampus: DataTypes.STRING,
+    cost_roomboard_offcampus: DataTypes.STRING,
+    open_admissions: DataTypes.INTEGER,
+    admin_test_reqs: DataTypes.STRING,
+    grad_earnings: DataTypes.STRING,
+
+
+
 }, {
     sequelize,
     timestamps: false,

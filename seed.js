@@ -25,7 +25,7 @@ const createFavorites = async () => {
 }
 
 const createSchools = async (page) => {
-    const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,ope6_id,school.name,school.state,school.city,school.school_url,latest.student.size,student.grad_students,student.demographics.women,latest.student.demographics.men,cost.attendance.academic_year,latest.cost.tuition.in_state,cost.tuition.out_of_state,latest.academics.program_reporter.programs_offered,latest.admissions.test_requirements&page=${page}&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
+    const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,ope6_id,school.name,school.state,school.city,school.zip,location.lat,location.lon,school.ownership,school.school_url,school.carnegie_size_setting,latest.student.size,latest.student.demographics.women,latest.student.demographics.men,school.institutional_characteristics.level,school.open_admissions_policy,latest.cost.tuition.in_state,latest.cost.tuition.out_of_state,academics.program_reporter.programs_offered,latest.cost.booksupply,latest.cost.roomboard.oncampus,latest.cost.roomboard.offcampus,latest.admissions.test_requirements,latest.earnings.6_yrs_after_entry.median_earnings_independent&page=${page}&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
   axios.get(url)
   .then(function (response) {
    
@@ -46,12 +46,30 @@ function createSchoolsArray1(results){
     results.map(i => (
         School.create(
             {
-                sid: i['id'],
                 fafsa: i['ope6_id'],
                 name: i['school.name'],
                 city : i['school.city'],
                 state : i['school.state'],
+                zip: i['school.zip'],
+                latitude: i['location.lat'],
+                longitude: i['location.lon'],
+                ownership: i['school.ownership'],
+                website: i['school.school_url'],
+                school_size: i['school.carnegie_size_setting'],
+                total_students: i['latest.student.size'],
                 women : i['latest.student.demographics.women'],
+                men: i['latest.student.demographics.men'],
+                school_category: i['school.institutional_characteristics.level'],
+                instate_tuition: i['latest.cost.tuition.in_state'],
+                outofstate_tuition: i['latest.cost.tuition.out_of_state'],
+                num_programs_offered: i['academics.program_reporter.programs_offered'],
+                cost_books: i['latest.cost.booksupply'],
+                cost_roomboard_oncampus: i['latest.cost.roomboard.oncampus'],
+                cost_roomboard_offcampus: i['latest.cost.roomboard.offcampus'],
+                open_admissions: i['school.open_admissions_policy'],
+                admin_test_reqs: i['latest.admissions.test_requirements'],
+                grad_earnings: i['latest.earnings.6_yrs_after_entry.median_earnings_independent'],
+                
             })))
     return(schoolResults)
 
