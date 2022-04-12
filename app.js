@@ -65,9 +65,9 @@ app.get('/tokens', async(req,res) =>{
   const options = { method: 'POST',
     url: `${process.env.AUTH0_URL}`,
     headers: { 'content-type': 'application/json' },
-    body: '{"client_id":`${process.env.CLIENT_ID}`,"client_secret":`${process.env.CLIENT_SECRET}`,"audience":`${process.env.AUDIENCE}`,"grant_type":"client_credentials"}'
+    body: `{"client_id":${process.env.CLIENT_ID},"client_secret":${process.env.CLIENT_SECRET},"audience":${process.env.AUDIENCE},"grant_type":"client_credentials"}`
   };
-
+  console.log(process.env.CLIENT_ID,process.env.CLIENT_SECRET,process.env.AUDIENCE,process.env.AUTH0_URL) 
   request(options, function (error, response, body) {
     if (error) throw new Error(error);
     const jsonBody = JSON.parse(body)
@@ -189,6 +189,15 @@ app.post('/users', async(req,res) =>{
   })
 
 })
+
+app.post(`/users/:userid/favorites`, async (req,res) => {
+  const favorites = await Favorite.create({
+    'UserId': req.params.userid,
+    'SchoolId': req.body.SchoolId
+  })
+    res.send(`${favorites.SchoolId} has been added to your favorites`)
+})
+
 
 
 // app.post('/sessions', async(req,res) =>{
