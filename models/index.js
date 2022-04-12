@@ -6,6 +6,7 @@ class User extends Model {}
 
 class Item extends Model {}
 class School extends Model {}
+class Favorite extends Model {}
 
 
 User.init({
@@ -25,6 +26,8 @@ Item.init({
 });
 
 School.init({
+    sid: DataTypes.STRING,
+    fafsa: DataTypes.STRING,
     name: DataTypes.STRING,
     city: DataTypes.STRING,
     state: DataTypes.STRING,
@@ -34,4 +37,20 @@ School.init({
     timestamps: false,
 });
 
-module.exports = {User, Item, School};
+
+
+Favorite.init({
+    UserId:  DataTypes.UUID,
+    SchoolId: DataTypes.UUID,
+    
+}, {
+    sequelize,
+    timestamps: false,
+});
+
+
+School.belongsToMany(User, {through: Favorite});
+User.belongsToMany(School, {through: Favorite});
+
+
+module.exports = {User, Item, School, Favorite};

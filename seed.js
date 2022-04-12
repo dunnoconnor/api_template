@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const bcrypt = require('bcrypt');
 const axios = require('axios');
 const {sequelize} = require('./db');
-const {User, Item, School} = require('./models');
+const {User, Item, School, Favorite} = require('./models');
 
 const createUsers = async () => {
 
@@ -18,6 +18,11 @@ const createUsers = async () => {
     return users
 }
 
+const createFavorites = async () => {
+
+    console.log(favorites)
+    return favorites
+  }
 
 const createSchools = async () => {
     const url = 'https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,school.name,school.state,school.city,school.school_url,latest.student.size,student.grad_students,student.demographics.women,latest.student.demographics.men,cost.attendance.academic_year,latest.cost.tuition.in_state,cost.tuition.out_of_state,latest.academics.program_reporter.programs_offered,latest.admissions.test_requirements&page=0&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE';

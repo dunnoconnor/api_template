@@ -1,34 +1,83 @@
+// requires
 const express = require("express");
-//require basicAuth
-const basicAuth = require('express-basic-auth');
-//require bcrypt
 const bcrypt = require('bcrypt');
+
+const basicAuth = require('express-basic-auth');
+const Sequelize = require("sequelize");
+const Op = Sequelize.Op;
+
+
 // set salt
 const saltRounds = 2;
 
 //get api key from env
 const apiKey = process.env.API_KEY;
+
+//dependencies for jwt Auth0
+const jwt = require('express-jwt');
+const jwks = require('jwks-rsa');
+//const cors = require('cors'); 
+//const request = require("request");
+
 //import axios
 const axios = require('axios');
 
-
-const {User, Item,} = require('./models');
+const {User, Item, School, Favorites, Favorite} = require('./models');
 const { use } = require("bcrypt/promises");
+const { application } = require("express");
+const { sequelize } = require("./db");
 
 // initialise Express
 const app = express();
 
-// specify out request bodies are json
+//allow cross-origin resource sharing
+app.use(cors());
+
+// allow express to read json request bodies
 app.use(express.json());
 
-//configure basicAuth
-app.use(basicAuth({
-  authorizer : dbAuthorizer,
-  authorizeAsync : true,
-  unauthorizedResponse : () => "You do not have access to this content."
-}))
+//configure jwTs OAuth
+const jwtCheck = jwt({
+  secret: jwks.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 5,
+      jwksUri: 'https://dev-52yany8j.us.auth0.com/.well-known/jwks.json'
+     
+}),
+audience: 'http://localhost:3000',
+issuer: 'https://dev-52yany8j.us.auth0.com/',
+algorithms: ['RS256']
+});
 
-//function to compare username and password
+
+// configure basicAuth
+// app.use(basicAuth({
+//   authorizer : dbAuthorizer,
+//   authorizeAsync : true,
+//   unauthorizedResponse : () => "You do not have access to this content."
+// }))
+
+//get Auth0
+app.get('/tokens', async(req,res) =>{
+  const options = { method: 'POST',
+    url: `${process.env.AUTH0_URL}`,
+    headers: { 'content-type': 'application/json' },
+    body: '{"client_id":`${process.env.CLIENT_ID}`,"client_secret":`${process.env.CLIENT_SECRET}`,"audience":`${process.env.AUDIENCE}`,"grant_type":"client_credentials"}'
+  };
+
+  request(options, function (error, response, body) {
+    if (error) throw new Error(error);
+    const jsonBody = JSON.parse(body)
+    const token = jsonBody.access_token
+    console.log("New JWT sent to authenticated user")
+    res.json(token)
+  });
+})
+
+
+
+//function to compare username and password with db content
 //return boolean indicating a passwor match
 async function dbAuthorizer(username,password, callback){
   try{
@@ -47,39 +96,104 @@ async function dbAuthorizer(username,password, callback){
 
 
 // routes go here
-app.get('/', (req, res) => {
+// Method GET
+app.get('/', jwtCheck, (req, res) => {
   res.send('<h1>App Running</h1>')
 })
 
 // returns all items
-app.get('/items', async(req, res) =>{
+app.get('/items', jwtCheck, async(req, res) =>{
     let items = await Item.findAll();
     res.json({items});
   })
 // returns one item by id
-app.get(`/items/:id`, async (req,res) => {
+app.get(`/items/:id`, jwtCheck, async (req,res) => {
     const singleitems = await Item.findByPk(req.params.id);
     res.json({singleitems});
   })
-
  
-//return one item by name
-// app.get('/item-name/:name', async(req,res)=>{   
-//   const thisItem = await Item.findOne({where:{name: req.params.name}})
-//   res.json(thisItem)
-
 // returns all users
-app.get('/users', async(req, res) =>{
+app.get('/users', jwtCheck, async(req, res) =>{
     let users = await User.findAll();
     res.json({users});
   })
 // returns one user by id
-  app.get(`/users/:id`, async (req,res) => {
+  app.get(`/users/:id`, jwtCheck, async (req,res) => {
     const singleusers = await User.findByPk(req.params.id);
     res.json({singleusers});
   })
+
+  app.get(`/users/:userid/favorites`, async (req,res) => {
+    const favorites = await User.findAll({ 
+      where: {id: req.params.userid}, 
+        attributes: { exclude: ['password']}, 
+          include: { model: School }
+        });
+     
+    res.json({favorites});
+   }); 
+
+   app.get('/schools', jwtCheck, async(req, res) =>{
+    let schools = await School.findAll();
+    res.json({schools});
+  })
+  
+  app.get(`/school/:id`, async (req,res) => {
+    const singleschool = await School.findByPk(req.params.id);
+    res.json({singleschool});
+  })
+  
+  app.get(`/schoolname/:name`, async (req,res) => {
+    const searchTerm = req.params.name;
+      const schoolsname = await School.findAll(
+      {where : {name: {[Op.like] : `%${searchTerm}%`}}});
+     res.json({schoolsname});  
+  
+  })  
+  app.get(`/schoolstate/:state`, async (req,res) => {
+    const schoolsbyst = await School.findAll(
+      {where : {state: req.params.state}});
+    res.json({schoolsbyst});  
+  })
+  
+  app.get(`/schoolcity/:city`, async (req,res) => {
+    const schoolscity = await School.findAll(
+      {where : {city: req.params.city}});
+    res.json({schoolscity});  
+  })
+  
+  // app.get(`/schoolowner/:ownership`, async (req,res) => {
+  //   const schoolsowner = await School.findOne(req.body,
+  //     {where : {ownership: req.params.ownership}});
+  //   res.json({schoolsowner});  
+  // })
+
+
+
+  // app.get('user/schools', async(req, res) =>{
+  //   let schools = await School.findAll();
+  //   res.json({schools});
+  // })
+  
+  // app.get(`/schools`, async(req, res) => {
+  //   const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,school.name,school.state,school.city,school.school_url,latest.student.size,student.grad_students,student.demographics.women,latest.student.demographics.men,cost.attendance.academic_year,latest.cost.tuition.in_state,cost.tuition.out_of_state,latest.academics.program_reporter.programs_offered,latest.admissions.test_requirements&page=0&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
+  //   axios.get(url)
+  //   .then(function (response) {
+  //     //if successful 
+  //     console.log(response.data.results.latest);
+  //     res.json(response.data.results)
+  //   })
+  //   .catch(function (error) {
+  //     //if error
+  //     console.log(error);
+  //   })
+  // })
+
+
+
+// Method POST
 // creates one new item
-app.post('/items', async(req,res) =>{
+app.post('/items', jwtCheck, async(req,res) =>{
   let newItem = await Item.create(req.body);
   res.json({newItem})
 })
@@ -94,30 +208,6 @@ app.post('/users', async(req,res) =>{
   })
 
 })
-
-app.get('/schools', async(req, res) =>{
-  let schools = await School.findAll();
-  res.json({schools});
-})
-
-// app.get('user/schools', async(req, res) =>{
-//   let schools = await School.findAll();
-//   res.json({schools});
-// })
-
-// app.get(`/schools`, async(req, res) => {
-//   const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,school.name,school.state,school.city,school.school_url,latest.student.size,student.grad_students,student.demographics.women,latest.student.demographics.men,cost.attendance.academic_year,latest.cost.tuition.in_state,cost.tuition.out_of_state,latest.academics.program_reporter.programs_offered,latest.admissions.test_requirements&page=0&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
-//   axios.get(url)
-//   .then(function (response) {
-//     //if successful 
-//     console.log(response.data.results.latest);
-//     res.json(response.data.results)
-//   })
-//   .catch(function (error) {
-//     //if error
-//     console.log(error);
-//   })
-// })
 
 
 // app.post('/sessions', async(req,res) =>{
@@ -137,7 +227,7 @@ app.get('/schools', async(req, res) =>{
 //   }
 // })
 
-
+// Method PUT
 //update one item by id
 app.put('/items/:id', async (req,res) => {
   let updatedItem = await Item.update(req.body, {
@@ -153,6 +243,8 @@ app.put('/users/:id', async (req,res) => {
   res.send(updatedUser ? "User Updated" : "update Failed")
 })
 
+
+// Method DELETE
 //DELETE method, items/:id path => Deletes an item from db.sqlite
 app.delete("/items/:id", async (req, res) => {
   const deletedItem = await Item.destroy({
