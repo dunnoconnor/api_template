@@ -1,5 +1,5 @@
 // requires
-const express = require("express");
+const express = require('express');
 const bcrypt = require('bcrypt');
 
 const basicAuth = require('express-basic-auth');
@@ -51,32 +51,6 @@ audience: 'http://localhost:3000',
 issuer: 'https://dev-52yany8j.us.auth0.com/',
 algorithms: ['RS256']
 });
-
-
-// configure basicAuth
-app.use(basicAuth({
-  authorizer : dbAuthorizer,
-  authorizeAsync : true,
-  unauthorizedResponse : () => "You do not have access to this content."
-}))
-
-//get Auth0
-app.get('/tokens', async(req,res) =>{
-  const options = { method: 'POST',
-    url: `${process.env.AUTH0_URL}`,
-    headers: { 'content-type': 'application/json' },
-    body: `{"client_id":${process.env.CLIENT_ID},"client_secret":${process.env.CLIENT_SECRET},"audience":${process.env.AUDIENCE},"grant_type":"client_credentials"}`
-  };
-  console.log(process.env.CLIENT_ID,process.env.CLIENT_SECRET,process.env.AUDIENCE,process.env.AUTH0_URL) 
-  request(options, function (error, response, body) {
-    if (error) throw new Error(error);
-    const jsonBody = JSON.parse(body)
-    const token = jsonBody.access_token
-    console.log("New JWT sent to authenticated user")
-    res.json(token)
-  });
-})
-
 
 
 //function to compare username and password with db content
@@ -164,11 +138,11 @@ app.get('/users', jwtCheck, async(req, res) =>{
     res.json({schoolscity});  
   })
   
-  // app.get(`/schoolowner/:ownership`, async (req,res) => {
-  //   const schoolsowner = await School.findOne(req.body,
-  //     {where : {ownership: req.params.ownership}});
-  //   res.json({schoolsowner});  
-  // })
+  app.get(`/schoolowner/:ownership`, async (req,res) => {
+    const schoolsowner = await School.findOne(req.body,
+      {where : {ownership: req.params.ownership}});
+    res.json({schoolsowner});  
+  })
 
 
 
@@ -250,7 +224,33 @@ app.delete("/users/:id", async (req, res) => {
   res.send(deletedUser ? "Deleted" : "Deletion Failed");
 });
 
+// configure basicAuth
+app.use(basicAuth({
+  authorizer : dbAuthorizer,
+  authorizeAsync : true,
+  unauthorizedResponse : () => "You do not have access to this content."
+}))
 
+//get Auth0
+app.get('/tokens', async(req,res) =>{
+  const options = { method: 'POST',
+    url: `${process.env.AUTH0_URL}`,
+    headers: { 'content-type': 'application/json' },
+    body: `{"client_id":${process.env.CLIENT_ID},"client_secret":${process.env.CLIENT_SECRET},"audience":${process.env.AUDIENCE},"grant_type":"client_credentials"}`
+  };
+  console.log(process.env.CLIENT_ID);
+  console.log(process.env.CLIENT_SECRET);
+  console.log(process.env.AUDIENCE);
+  console.log(process.env.AUTH0_URL);
+  
+  request(options, function (error, response, body) {
+    if (error) throw new Error(error);
+    const jsonBody = JSON.parse(body)
+    const token = jsonBody.access_token
+    console.log("New JWT sent to authenticated user")
+    res.json(token)
+  });
+})
 
 app.listen(3000, () => {
   console.log("Server running on port 3000");
