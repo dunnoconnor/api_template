@@ -47,6 +47,8 @@ function createSchoolsArray1(results){
     results.map(i => (
         School.create(
             {
+                fafsa: i['ope6_id'],
+                sid: i['id'],
                 name: i['school.name'],
                 city : i['school.city'],
                 state : i['school.state'],

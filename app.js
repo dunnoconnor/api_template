@@ -16,11 +16,13 @@ const apiKey = process.env.API_KEY;
 //dependencies for jwt Auth0
 const jwt = require('express-jwt');
 const jwks = require('jwks-rsa');
-//const cors = require('cors'); 
-//const request = require("request");
+const cors = require('cors'); 
+var request = require("request");
 
 //import axios
 const axios = require('axios');
+
+require('dotenv').config('.env');
 
 const {User, Item, School, Favorites, Favorite} = require('./models');
 const { use } = require("bcrypt/promises");
@@ -52,11 +54,11 @@ algorithms: ['RS256']
 
 
 // configure basicAuth
-// app.use(basicAuth({
-//   authorizer : dbAuthorizer,
-//   authorizeAsync : true,
-//   unauthorizedResponse : () => "You do not have access to this content."
-// }))
+app.use(basicAuth({
+  authorizer : dbAuthorizer,
+  authorizeAsync : true,
+  unauthorizedResponse : () => "You do not have access to this content."
+}))
 
 //get Auth0
 app.get('/tokens', async(req,res) =>{
@@ -170,30 +172,9 @@ app.get('/users', jwtCheck, async(req, res) =>{
 
 
 
-  // app.get('user/schools', async(req, res) =>{
-  //   let schools = await School.findAll();
-  //   res.json({schools});
-  // })
-  
-  // app.get(`/schools`, async(req, res) => {
-  //   const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,school.name,school.state,school.city,school.school_url,latest.student.size,student.grad_students,student.demographics.women,latest.student.demographics.men,cost.attendance.academic_year,latest.cost.tuition.in_state,cost.tuition.out_of_state,latest.academics.program_reporter.programs_offered,latest.admissions.test_requirements&page=0&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
-  //   axios.get(url)
-  //   .then(function (response) {
-  //     //if successful 
-  //     console.log(response.data.results.latest);
-  //     res.json(response.data.results)
-  //   })
-  //   .catch(function (error) {
-  //     //if error
-  //     console.log(error);
-  //   })
-  // })
-
-
-
 // Method POST
 // creates one new item
-app.post('/items', jwtCheck, async(req,res) =>{
+app.post('/items',async(req,res) =>{
   let newItem = await Item.create(req.body);
   res.json({newItem})
 })
