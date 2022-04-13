@@ -103,7 +103,7 @@ app.get('/users', jwtCheck, async(req, res) =>{
     const favorites = await User.findAll({ 
       where: {id: req.params.userid}, 
         attributes: { exclude: ['password']}, 
-          include: { model: School }
+          include: { model: School,  attributes: ['name', 'fafsa', 'city', 'state'] }
         });
      
     res.json({favorites});
@@ -139,12 +139,22 @@ app.get('/users', jwtCheck, async(req, res) =>{
   })
   
   app.get(`/schoolowner/:ownership`, async (req,res) => {
-    const schoolsowner = await School.findOne(req.body,
-      {where : {ownership: req.params.ownership}});
+    const schoolsowner = await School.findAll({
+      where : {ownership: req.params.ownership},
+          attributes: ['name', 'fafsa', 'city', 'state']
+      });
     res.json({schoolsowner});  
   })
 
-
+//delete item from from favorite
+  app.delete(`/favorite/:userid/:schoolid`, async (req,res) => {
+    const deletefave = await Favorite.findOne({
+    where: {UserId: req.params.userid, SchoolId: req.params.schoolid}
+    
+  });
+    await deletefave.destroy()
+    res.send( `Oh no...item number ${Favorite.SchoolId} has been deleted!!!`)
+  })
 
 // Method POST
 // creates one new item
