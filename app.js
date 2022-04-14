@@ -29,6 +29,7 @@ const { use } = require("bcrypt/promises");
 const { application } = require("express");
 const { sequelize } = require("./db");
 
+
 // initialise Express
 const app = express();
 
@@ -52,7 +53,6 @@ issuer: 'https://dev-52yany8j.us.auth0.com/',
 algorithms: ['RS256']
 });
 
-
 //function to compare username and password with db content
 //return boolean indicating a passwor match
 async function dbAuthorizer(username,password, callback){
@@ -73,28 +73,28 @@ async function dbAuthorizer(username,password, callback){
 
 // routes go here
 // Method GET
-app.get('/', jwtCheck, (req, res) => {
+app.get('/', (req, res) => {
   res.send('<h1>App Running</h1>')
 })
 
 // returns all items
-app.get('/items', jwtCheck, async(req, res) =>{
+app.get('/items',  async(req, res) =>{
     let items = await Item.findAll();
     res.json({items});
   })
 // returns one item by id
-app.get(`/items/:id`, jwtCheck, async (req,res) => {
+app.get(`/items/:id`, async (req,res) => {
     const singleitems = await Item.findByPk(req.params.id);
     res.json({singleitems});
   })
  
 // returns all users
-app.get('/users', jwtCheck, async(req, res) =>{
+app.get('/users', async(req, res) =>{
     let users = await User.findAll();
     res.json({users});
   })
 // returns one user by id
-  app.get(`/users/:id`, jwtCheck, async (req,res) => {
+  app.get(`/users/:id`, async (req,res) => {
     const singleusers = await User.findByPk(req.params.id);
     res.json({singleusers});
   })
@@ -109,7 +109,7 @@ app.get('/users', jwtCheck, async(req, res) =>{
     res.json({favorites});
    }); 
 
-   app.get('/schools', jwtCheck, async(req, res) =>{
+   app.get('/schools', async(req, res) =>{
     let schools = await School.findAll();
     res.json({schools});
   })
@@ -129,13 +129,16 @@ app.get('/users', jwtCheck, async(req, res) =>{
   app.get(`/schoolstate/:state`, async (req,res) => {
     const schoolsbyst = await School.findAll(
       {where : {state: req.params.state}});
-    res.json({schoolsbyst});  
+      if(schoolsbyst.length===0)
+       { return res.send('Error - invalid 2 digit state code or no results found') }
+      res.json({schoolsbyst});  
   })
-  
+    
   app.get(`/schoolcity/:city`, async (req,res) => {
+    const searchTerm = req.params.city;
     const schoolscity = await School.findAll(
-      {where : {city: req.params.city}});
-    res.json({schoolscity});  
+    {where : {city: {[Op.like] : `%${searchTerm}%`}}});
+   res.json({schoolscity});
   })
   
   app.get(`/schoolowner/:ownership`, async (req,res) => {
@@ -244,10 +247,13 @@ app.use(basicAuth({
 //get Auth0
 app.get('/tokens', async(req,res) =>{
   const options = { method: 'POST',
-    url: `${process.env.AUTH0_URL}`,
-    headers: { 'content-type': 'application/json' },
-    body: `{"client_id":${process.env.CLIENT_ID},"client_secret":${process.env.CLIENT_SECRET},"audience":${process.env.AUDIENCE},"grant_type":"client_credentials"}`
+  url: 'https://dev-52yany8j.us.auth0.com/oauth/token',
+  headers: { 'content-type': 'application/json' },
+  body: process.env.TOKEN_REQ_BODY
+  // body: '{"client_id":"JoZuEB3yZv0H8Yt7AdCU3tuIXPMBJeOk","client_secret":"pv6qcOB-hCWtOXrmwWSscPlmcdAR3wybXeTXt6xhVMD_hW6eccrR8xDajFHUgbxe","audience":"http://localhost:3000","grant_type":"client_credentials"}'
+
   };
+
   console.log(process.env.CLIENT_ID);
   console.log(process.env.CLIENT_SECRET);
   console.log(process.env.AUDIENCE);
@@ -258,6 +264,10 @@ app.get('/tokens', async(req,res) =>{
     const jsonBody = JSON.parse(body)
     const token = jsonBody.access_token
     console.log("New JWT sent to authenticated user")
+
+    console.log("body",body)
+    console.log("json body", jsonBody)
+    console.log("token", token)
     res.json(token)
   });
 })
