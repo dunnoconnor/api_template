@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const bcrypt = require('bcrypt');
 const axios = require('axios');
 const {sequelize} = require('./db');
-const {User, Item, School, Favorite} = require('./models');
+const {User, Item, School, Favorite, Major} = require('./models');
 
 const createUsers = async () => {
 
@@ -25,7 +25,7 @@ const createFavorites = async () => {
 }
 
 const createSchools = async (page) => {
-    const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,ope6_id,school.name,school.state,school.city,school.zip,location.lat,location.lon,school.ownership,school.school_url,school.carnegie_size_setting,latest.student.size,latest.student.demographics.women,latest.student.demographics.men,school.institutional_characteristics.level,school.open_admissions_policy,latest.cost.tuition.in_state,latest.cost.tuition.out_of_state,academics.program_reporter.programs_offered,latest.cost.booksupply,latest.cost.roomboard.oncampus,latest.cost.roomboard.offcampus,latest.admissions.test_requirements,latest.earnings.6_yrs_after_entry.median_earnings_independent&page=${page}&per_page=51&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
+    const url = `https://api.data.gov/ed/collegescorecard/v1/schools.json?school.minority_serving.historically_black=1&fields=id,ope6_id,school.name,school.state,school.city,school.zip,location.lat,location.lon,school.ownership,school.school_url,school.carnegie_size_setting,latest.student.size,latest.student.demographics.women,latest.student.demographics.men,school.institutional_characteristics.level,school.open_admissions_policy,latest.cost.tuition.in_state,latest.cost.tuition.out_of_state,academics.program_reporter.programs_offered,latest.cost.booksupply,latest.cost.roomboard.oncampus,latest.cost.roomboard.offcampus,latest.admissions.test_requirements,latest.earnings.6_yrs_after_entry.median_earnings_independent,latest.programs.cip_4_digit.title&page=${page}&per_page=99&api_key=8Ajj4V22PvwDtL2ocDvut35YqCXArI2TVhvQWfvE`;
   axios.get(url)
   .then(function (response) {
    
@@ -41,11 +41,13 @@ const createSchools = async (page) => {
 }
 
 function createSchoolsArray1(results){
-    let schoolResults = [];
-
-    results.map(i => (
+    
+    for (i of results){
+        // console.log(i)
+        let majorList = (i['latest.programs.cip_4_digit'])
         School.create(
             {
+                id: i['id'],
                 fafsa: i['ope6_id'],
                 name: i['school.name'],
                 city : i['school.city'],
@@ -69,12 +71,20 @@ function createSchoolsArray1(results){
                 open_admissions: i['school.open_admissions_policy'],
                 admin_test_reqs: i['latest.admissions.test_requirements'],
                 grad_earnings: i['latest.earnings.6_yrs_after_entry.median_earnings_independent'],
-                
-            })))
-    return(schoolResults)
-
-        
-        };
+                    
+            })
+    
+            
+            for (m of majorList){
+              // console.log(m)
+              Major.create({
+                major : m.title,
+                SchoolId: i['id'],
+              }
+              )}  
+              
+            }    
+  };
 
 const items = [
     {name : 'Gold'},

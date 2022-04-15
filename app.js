@@ -15,10 +15,11 @@ const jwks = require('jwks-rsa');
 // //import axios
 const axios = require('axios');
 
-const {User, Item, School, Favorites, Favorite} = require('./models');
+const {User, Item, School, Favorites, Favorite, Major} = require('./models');
 const { use } = require("bcrypt/promises");
 const { application } = require("express");
 const { sequelize } = require("./db");
+const { where } = require("sequelize");
 
 // initialise Express
 const app = express();
@@ -88,6 +89,11 @@ app.get(`/users/:userid/favorites`, async (req,res) => {
 app.get(`/items/:id`, async (req,res) => {
   const singleitems = await Item.findByPk(req.params.id);
   res.json({singleitems});
+})
+app.get(`/majors/:schoolid`, async (req,res)=> {
+  const major = await Major.findAll(
+    {where: {SchoolId: req.params.schoolid}});
+    res.json({major});
 })
 
 app.get(`/users`, jwtCheck, async (req,res) => {
